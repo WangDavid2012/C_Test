@@ -178,9 +178,9 @@ int EC_KEY_up_ref(EC_KEY *r)
     REF_ASSERT_ISNT(i < 2);
     return ((i > 1) ? 1 : 0);
 }
-/*
-
-*/
+/*****************************************************
+*产生密钥对
+******************************************************/
 int EC_KEY_generate_key(EC_KEY *eckey)
 {
     if (eckey == NULL || eckey->group == NULL) {

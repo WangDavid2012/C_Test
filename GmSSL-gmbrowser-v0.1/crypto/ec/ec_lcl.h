@@ -197,10 +197,10 @@ G表示椭圆曲线上的一个点。
 runwang
 *****************************************************************/
 struct ec_group_st {
-    const EC_METHOD *meth;
-    EC_POINT *generator;        /* optional */
-    BIGNUM *order, *cofactor;
-    int curve_name;             /* optional NID for named curve */
+    const EC_METHOD *meth;      //封装的函数
+    EC_POINT *generator;        /* optional */ //基向量，即基点G
+    BIGNUM *order, *cofactor;   //基点G的阶n和余因子h
+    int curve_name;             //选择椭圆曲线的名称 /* optional NID for named curve */
     int asn1_flag;              /* flag to control the asn1 encoding */
     point_conversion_form_t asn1_form;
     unsigned char *seed;        /* optional seed for parameters (appears in
@@ -231,7 +231,7 @@ struct ec_group_st {
      * x^3 + a*x + b. For characteristic 2, the curve is defined by an
      * equation of the form y^2 + x*y = x^3 + a*x^2 + b.
      */
-    BIGNUM *a, *b;
+    BIGNUM *a, *b;   //椭圆曲线的 a b 参数，用于确定椭圆曲线方程
     /* enable optimized point arithmetics for special case */
     int a_is_minus3;
     /* method-specific (e.g., Montgomery structure) */
