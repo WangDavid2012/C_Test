@@ -81,9 +81,19 @@
  *
  * For details on the use of these macros, see the queue(3) manual page.
  */
+/*********************************************************
+一共提供了5个数据结构的封装
+1. 单链表 list     SLIST  省内存，少删除，少插入
+2. 双向列表 list   LIST,  可惜只能头部插入，
+3. 单队列 simple queue   可头尾插入。  头尾移除还是快的。中间就慢了
+4. TAILQ  就是本文分析的这个了， 双链表队列， 中间插入也快的。 就是耗点内存
+5. 循环链表
+  王占备 20200811
+*********************************************************/
 
 /*
  * Singly-linked List definitions.
+ * 单向链表相关操作
  */
 #define SLIST_HEAD(name, type)						\
 struct name {								\
