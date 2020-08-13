@@ -247,14 +247,36 @@ struct evkeyval {
 	char *value;
 };
 
+/**************************
+#define TAILQ_HEAD(name, type)		
+struct name {							
+	struct type *tqh_first;	//first element 	
+	struct type **tqh_last;	// addr of last next element 
+}
+
+*************************************/
+
+
 #ifdef _EVENT_DEFINED_TQENTRY
 #undef TAILQ_ENTRY
 struct event_list;
 struct evkeyvalq;
 #undef _EVENT_DEFINED_TQENTRY
 #else
-TAILQ_HEAD (event_list, event);
-TAILQ_HEAD (evkeyvalq, evkeyval);
+//TAILQ_HEAD (event_list, event);
+//TAILQ_HEAD (evkeyvalq, evkeyval);
+
+//改用此种方式，方便阅读代码
+struct event_list {							
+	struct event *tqh_first;	//first element 	
+	struct event **tqh_last;	// addr of last next element 
+}
+
+struct evkeyvalq {							
+	struct evkeyval *tqh_first;	//first element 	
+	struct evkeyval **tqh_last;	// addr of last next element 
+}
+
 #endif /* _EVENT_DEFINED_TQENTRY */
 
 /**

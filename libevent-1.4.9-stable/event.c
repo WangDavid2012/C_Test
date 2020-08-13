@@ -170,12 +170,14 @@ event_init(void)
 	return (base);
 }
 
+//原型：void* calloc（unsigned int num，unsigned int size）；
+//功能：在内存的动态存储区中分配num个长度为size的连续空间；
+//注意：num：对象个数，size：对象占据的内存字节数，相较于malloc函数，calloc函数会自动将内存初始化为0；
 struct event_base *
 event_base_new(void)
 {
 	int i;
 	struct event_base *base;
-
 	if ((base = calloc(1, sizeof(struct event_base))) == NULL)
 		event_err(1, "%s: calloc", __func__);
 
@@ -185,8 +187,8 @@ event_base_new(void)
 	detect_monotonic();
 	gettime(base, &base->event_tv);
 	
-	min_heap_ctor(&base->timeheap);
-	TAILQ_INIT(&base->eventqueue);
+	min_heap_ctor(&base->timeheap);      //创建了一个最小堆
+	TAILQ_INIT(&base->eventqueue);       //创建一个双向循环链表
 	base->sig.ev_signal_pair[0] = -1;
 	base->sig.ev_signal_pair[1] = -1;
 	
