@@ -209,28 +209,84 @@ struct {								\
 #endif /* !TAILQ_ENTRY */
 
 struct event_base;
+
+/****************************************************
+Event Handler——事件处理程序
+    事件处理程序提供了一组接口，每个接口对应了一种类型的事件，
+    供Reactor在相应的事件发生时调用，执行相应的事件处理。
+    通常它会绑定一个有效的句柄。
+对应到libevent中，就是event结构体。
+下面是两种典型的Event Handler类声明方式，二者互有优缺点
+class Event_Handler
+{
+public:
+    virtual void handle_read() = 0;
+    virtual void handle_write() = 0;
+    virtual void handle_timeout() = 0;
+    virtual void handle_close() = 0;
+    virtual HANDLE get_handle() = 0;
+    // ...
+};
+class Event_Handler
+{
+public:
+    // events maybe read/write/timeout/close .etc
+    virtual void handle_events(int events) = 0;
+    virtual HANDLE get_handle() = 0;
+    // ...
+};
+
+ev_events：event关注的事件类型，它可以是以下3种类型：
+I/O事件： EV_WRITE和EV_READ
+定时事件：EV_TIMEOUT
+信号：    EV_SIGNAL
+辅助选项：EV_PERSIST，表明是一个永久事件
+
+
+ev_next，ev_active_next和ev_signal_next都是双向链表节点指针；
+它们是libevent对不同事件类型和在不同的时期，对事件的管理时使用到的字段。
+libevent使用双向链表保存所有注册的I/O和Signal事件，
+ev_next就是该I/O事件在链表中的位置；称此链表为“已注册事件链表”；
+同样ev_signal_next就是signal事件在signal事件链表中的位置；
+ev_active_next：libevent将所有的激活事件放入到链表active list中，
+然后遍历active list执行调度，ev_active_next就指明了event在active list中的位置；
+
+min_heap_idx和ev_timeout，如果是timeout事件，它们是event在小根堆中的索引和超时值，
+libevent使用小根堆来管理定时事件，这将在后面定时事件处理时专门讲解
+
+libevent用于标记event信息的字段，表明其当前的状态，可能的值有：
+
+#define EVLIST_TIMEOUT 0x01     // event在time堆中
+#define EVLIST_INSERTED 0x02    // event在已注册事件链表中
+#define EVLIST_SIGNAL 0x04      // 未见使用
+#define EVLIST_ACTIVE 0x08      // event在激活链表中
+#define EVLIST_INTERNAL 0x10    // 内部使用标记
+#define EVLIST_INIT     0x80    //  event已被初始化
+
+********************************************/
+
 struct event {
-	TAILQ_ENTRY (event) ev_next;
-	TAILQ_ENTRY (event) ev_active_next;
-	TAILQ_ENTRY (event) ev_signal_next;
-	unsigned int min_heap_idx;	/* for managing timeouts */
+	TAILQ_ENTRY (event) ev_next;        //已注册事件链表，名字叫ev_next，event是类型，非活跃，
+	TAILQ_ENTRY (event) ev_active_next; //活跃事件链表，叫链表或者队列都行，下文碰见队列也是说这几个
+	TAILQ_ENTRY (event) ev_signal_next; //信号事件链表
+	unsigned int min_heap_idx;	        /* for managing timeouts */ //超时事件在小根堆中的索引
 
-	struct event_base *ev_base;
+	struct event_base *ev_base;         //ev_base该事件所属的反应堆实例，这是一个event_base结构体
 
-	int ev_fd;
-	short ev_events;
-	short ev_ncalls;
-	short *ev_pncalls;	/* Allows deletes in callback */
+	int ev_fd;                          //ev_fd，对于I/O事件，是绑定的文件描述符；对于signal事件，是绑定的信号；
+	short ev_events;                    //event关注的事件类型，它可以是以下3种类型：IO事件，定时事件，信号事件
+	short ev_ncalls;                    //事件就绪执行时，调用ev_callback的次数，通常为1；
+	short *ev_pncalls;	                //指针，通常指向ev_ncalls或者为NULL；/* Allows deletes in callback */
 
 	struct timeval ev_timeout;
 
 	int ev_pri;		/* smaller numbers are higher priority */
 
-	void (*ev_callback)(int, short, void *arg);
-	void *ev_arg;
+	void (*ev_callback)(int, short, void *arg);       //event的回调函数，被ev_base调用，执行事件处理程序，这是一个函数指针
+	void *ev_arg;            //设置event时指定
 
-	int ev_res;		/* result passed to event callback */
-	int ev_flags;
+	int ev_res;		        /* result passed to event callback */
+	int ev_flags;           //libevent用于标记event信息的字段，表明其当前的状态，可能的值有：
 };
 
 #define EVENT_SIGNAL(ev)	(int)(ev)->ev_fd
